@@ -86,6 +86,18 @@ class SSMManager:
         except Exception as e:
             click.echo(f"Error creating parameter: {e}", err=True)
             return False
+    
+    def delete_parameter(self, name: str) -> bool:
+        """Delete a parameter."""
+        try:
+            self.ssm.delete_parameter(Name=name)
+            return True
+        except self.ssm.exceptions.ParameterNotFound:
+            click.echo(f"Parameter {name} not found.", err=True)
+            return False
+        except Exception as e:
+            click.echo(f"Error deleting parameter: {e}", err=True)
+            return False
 
 
 @click.group()
@@ -100,7 +112,7 @@ def cli(ctx, region):
 @cli.command()
 @click.pass_context
 def list(ctx):
-    """List all SSM parameters and select one to update."""
+    """List all SSM parameters and select one to view or update."""
     manager = ctx.obj['manager']
     
     click.echo("Fetching parameters from SSM Parameter Store...")
@@ -121,11 +133,14 @@ def list(ctx):
     # Add option to create new parameter
     choices.append(questionary.Choice(title="[Create New Parameter]", value="__CREATE_NEW__"))
     
+    # Add option to delete parameter
+    choices.append(questionary.Choice(title="[Delete Parameter]", value="__DELETE__"))
+    
     # Add option to quit
     choices.append(questionary.Choice(title="[Quit]", value="__QUIT__"))
     
     selected = questionary.select(
-        "Select a parameter to update (or create new):",
+        "Select a parameter (or choose an action):",
         choices=choices
     ).ask()
     
@@ -139,8 +154,124 @@ def list(ctx):
     
     if selected == "__CREATE_NEW__":
         create_parameter_flow(manager)
+    elif selected == "__DELETE__":
+        delete_parameter_interactive(manager, parameters)
     else:
-        update_existing_parameter(manager, selected)
+        # Parameter selected - show view/update options
+        parameter_action(manager, selected, parameters)
+
+
+def delete_parameter_interactive(manager: SSMManager, parameters: List[Dict]):
+    """Interactive deletion of a parameter."""
+    click.echo("\nDelete Parameter")
+    
+    if not parameters:
+        click.echo("No parameters available to delete.")
+        return
+    
+    # Format parameter list for selection
+    choices = []
+    for param in parameters:
+        display_name = f"{param['Name']} ({param['Type']})"
+        if param['Description']:
+            display_name += f" - {param['Description']}"
+        choices.append(questionary.Choice(title=display_name, value=param['Name']))
+    
+    selected = questionary.select(
+        "Select a parameter to delete:",
+        choices=choices
+    ).ask()
+    
+    if not selected:
+        click.echo("Cancelled.")
+        return
+    
+    # Show parameter info before deletion
+    param_info = next((p for p in parameters if p['Name'] == selected), None)
+    click.echo(f"\nParameter to delete: {selected}")
+    if param_info:
+        click.echo(f"Type: {param_info['Type']}")
+        if param_info['Description']:
+            click.echo(f"Description: {param_info['Description']}")
+    
+    # Confirm deletion
+    if questionary.confirm("⚠️  Are you sure you want to delete this parameter? This action cannot be undone.", default=False).ask():
+        if manager.delete_parameter(selected):
+            click.echo(f"✓ Successfully deleted {selected}")
+        else:
+            click.echo(f"✗ Failed to delete {selected}")
+    else:
+        click.echo("Cancelled.")
+
+
+def parameter_action(manager: SSMManager, param_name: str, parameters: List[Dict]):
+    """Show view/update options for a selected parameter."""
+    param_info = next((p for p in parameters if p['Name'] == param_name), None)
+    
+    if not param_info:
+        click.echo(f"Parameter {param_name} not found.")
+        return
+    
+    action = questionary.select(
+        f"What would you like to do with '{param_name}'?",
+        choices=[
+            questionary.Choice("View", value="view"),
+            questionary.Choice("Update", value="update"),
+        ]
+    ).ask()
+    
+    if not action:
+        click.echo("Cancelled.")
+        return
+    
+    if action == "view":
+        view_parameter(manager, param_name, param_info)
+    elif action == "update":
+        update_existing_parameter(manager, param_name)
+
+
+def view_parameter(manager: SSMManager, param_name: str, param_info: Dict):
+    """Display parameter details."""
+    click.echo(f"\n{'='*60}")
+    click.echo(f"Parameter: {param_name}")
+    click.echo(f"{'='*60}")
+    
+    click.echo(f"Type: {param_info['Type']}")
+    
+    if param_info.get('Description'):
+        click.echo(f"Description: {param_info['Description']}")
+    
+    if param_info.get('LastModifiedDate') and param_info['LastModifiedDate'] != 'N/A':
+        click.echo(f"Last Modified: {param_info['LastModifiedDate']}")
+    
+    # Get and display the value
+    value = manager.get_parameter_value(param_name)
+    if value is None:
+        click.echo("\n⚠️  Could not retrieve parameter value.")
+    else:
+        click.echo(f"\nValue:")
+        click.echo(f"{'-'*60}")
+        # Show full value, but format nicely if it's long
+        if len(value) > 200:
+            click.echo(value[:200])
+            click.echo(f"... (truncated, full length: {len(value)} characters)")
+        else:
+            click.echo(value)
+        click.echo(f"{'-'*60}")
+    
+    click.echo(f"\n{'='*60}\n")
+    
+    # Option to go back or update
+    next_action = questionary.select(
+        "What would you like to do?",
+        choices=[
+            questionary.Choice("Update this parameter", value="update"),
+            questionary.Choice("Go back", value="back"),
+        ]
+    ).ask()
+    
+    if next_action == "update":
+        update_existing_parameter(manager, param_name)
 
 
 def update_existing_parameter(manager: SSMManager, param_name: str):
@@ -397,6 +528,29 @@ def get(ctx, name):
         sys.exit(1)
     
     click.echo(value)
+
+
+@cli.command()
+@click.argument('name')
+@click.option('--force', '-f', is_flag=True, help='Skip confirmation prompt')
+@click.pass_context
+def delete(ctx, name, force):
+    """Delete a specific parameter."""
+    manager = ctx.obj['manager']
+    
+    if not force:
+        if not questionary.confirm(
+            f"⚠️  Are you sure you want to delete parameter '{name}'? This action cannot be undone.",
+            default=False
+        ).ask():
+            click.echo("Cancelled.")
+            return
+    
+    if manager.delete_parameter(name):
+        click.echo(f"✓ Successfully deleted {name}")
+    else:
+        click.echo(f"✗ Failed to delete {name}")
+        sys.exit(1)
 
 
 if __name__ == '__main__':
