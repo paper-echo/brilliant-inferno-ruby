@@ -28,7 +28,7 @@ You'll know it's activated when you see `(venv)` at the beginning of your termin
 Check that the tool is working:
 
 ```bash
-python ssm_manager.py --help
+python3 ssm_manager.py --help
 ```
 
 You should see a list of available commands.
@@ -43,7 +43,7 @@ You should see a list of available commands.
 
 1. Run the list command:
    ```bash
-   python ssm_manager.py list
+   python3 ssm_manager.py list
    ```
 
 2. The tool will fetch all parameters and display them in an interactive menu:
@@ -81,7 +81,7 @@ You should see a list of available commands.
 
 **Method 1: From the List Menu**
 
-1. Run `python ssm_manager.py list`
+1. Run `python3 ssm_manager.py list`
 2. Select `[Create New Parameter]` from the menu
 3. Follow the prompts
 
@@ -89,7 +89,7 @@ You should see a list of available commands.
 
 1. Run the create command:
    ```bash
-   python ssm_manager.py create
+   python3 ssm_manager.py create
    ```
 
 2. Enter the parameter name:
@@ -132,7 +132,7 @@ You should see a list of available commands.
 
 1. Run the get command with the parameter name:
    ```bash
-   python ssm_manager.py get /app/config/database-url
+   python3 ssm_manager.py get /app/config/database-url
    ```
 
 2. The value will be printed to stdout:
@@ -142,7 +142,7 @@ You should see a list of available commands.
 
 **Tip:** You can pipe this to other commands or save it to a file:
 ```bash
-python ssm_manager.py get /app/config/database-url > db_url.txt
+python3 ssm_manager.py get /app/config/database-url > db_url.txt
 ```
 
 ### Use Case 4: Working with Different AWS Regions
@@ -153,13 +153,13 @@ python ssm_manager.py get /app/config/database-url > db_url.txt
 
 1. Use the `--region` flag:
    ```bash
-   python ssm_manager.py --region us-west-2 list
+   python3 ssm_manager.py --region us-west-2 list
    ```
 
 2. Or for other commands:
    ```bash
-   python ssm_manager.py --region eu-central-1 create
-   python ssm_manager.py --region ap-southeast-1 get /app/config/key
+   python3 ssm_manager.py --region eu-central-1 create
+   python3 ssm_manager.py --region ap-southeast-1 get /app/config/key
    ```
 
 ## Command Reference
@@ -167,8 +167,8 @@ python ssm_manager.py get /app/config/database-url > db_url.txt
 ### `list` - List and Update Parameters
 
 ```bash
-python ssm_manager.py list
-python ssm_manager.py --region us-east-1 list
+python3 ssm_manager.py list
+python3 ssm_manager.py --region us-east-1 list
 ```
 
 **What it does:**
@@ -180,8 +180,8 @@ python ssm_manager.py --region us-east-1 list
 ### `create` - Create New Parameter
 
 ```bash
-python ssm_manager.py create
-python ssm_manager.py --region us-west-2 create
+python3 ssm_manager.py create
+python3 ssm_manager.py --region us-west-2 create
 ```
 
 **What it does:**
@@ -192,8 +192,8 @@ python ssm_manager.py --region us-west-2 create
 ### `get` - Get Parameter Value
 
 ```bash
-python ssm_manager.py get <parameter-name>
-python ssm_manager.py --region eu-central-1 get /app/config/api-key
+python3 ssm_manager.py get <parameter-name>
+python3 ssm_manager.py --region eu-central-1 get /app/config/api-key
 ```
 
 **What it does:**
@@ -204,8 +204,8 @@ python ssm_manager.py --region eu-central-1 get /app/config/api-key
 ### `--help` - Show Help
 
 ```bash
-python ssm_manager.py --help
-python ssm_manager.py list --help
+python3 ssm_manager.py --help
+python3 ssm_manager.py list --help
 ```
 
 ## Tips and Best Practices
@@ -233,8 +233,8 @@ For bulk operations, you might want to script this tool:
 ```bash
 #!/bin/bash
 source venv/bin/activate
-python ssm_manager.py get /app/config/key1
-python ssm_manager.py get /app/config/key2
+python3 ssm_manager.py get /app/config/key1
+python3 ssm_manager.py get /app/config/key2
 ```
 
 ### 5. Error Handling
@@ -283,7 +283,7 @@ export AWS_SECRET_ACCESS_KEY=your-secret
 
 ```bash
 $ source venv/bin/activate
-$ python ssm_manager.py list
+$ python3 ssm_manager.py list
 Fetching parameters from SSM Parameter Store...
 ? Select a parameter to update (or create new): /app/db/url
 Updating parameter: /app/db/url
@@ -296,7 +296,7 @@ Current value: postgresql://old-host:5432/db
 ### Example 2: Create Secure API Key
 
 ```bash
-$ python ssm_manager.py create
+$ python3 ssm_manager.py create
 ? Parameter name: /app/api/external-key
 ? Parameter value: sk_live_1234567890abcdef
 ? Parameter type: SecureString
@@ -308,13 +308,13 @@ $ python ssm_manager.py create
 ### Example 3: Quick Value Retrieval
 
 ```bash
-$ python ssm_manager.py get /app/config/version
+$ python3 ssm_manager.py get /app/config/version
 1.2.3
 ```
 
 ## Next Steps
 
-- Explore all your parameters with `python ssm_manager.py list`
+- Explore all your parameters with `python3 ssm_manager.py list`
 - Create parameters for your application configuration
 - Use SecureString for any sensitive values
 - Organize parameters using hierarchical paths

@@ -118,6 +118,9 @@ def list(ctx):
     # Add option to create new parameter
     choices.append(questionary.Choice(title="[Create New Parameter]", value="__CREATE_NEW__"))
     
+    # Add option to quit
+    choices.append(questionary.Choice(title="[Quit]", value="__QUIT__"))
+    
     selected = questionary.select(
         "Select a parameter to update (or create new):",
         choices=choices
@@ -125,6 +128,10 @@ def list(ctx):
     
     if not selected:
         click.echo("Cancelled.")
+        return
+    
+    if selected == "__QUIT__":
+        click.echo("Goodbye!")
         return
     
     if selected == "__CREATE_NEW__":

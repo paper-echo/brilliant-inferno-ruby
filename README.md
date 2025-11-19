@@ -36,7 +36,7 @@ pip install -r requirements.txt
 List all parameters and interactively select one to update:
 
 ```bash
-python ssm_manager.py list
+python3 ssm_manager.py list
 ```
 
 This will:
@@ -51,7 +51,7 @@ This will:
 Create a new parameter interactively:
 
 ```bash
-python ssm_manager.py create
+python3 ssm_manager.py create
 ```
 
 Or use the script directly:
@@ -70,7 +70,7 @@ This will prompt you for:
 Get the value of a specific parameter:
 
 ```bash
-python ssm_manager.py get /path/to/parameter
+python3 ssm_manager.py get /path/to/parameter
 ```
 
 ### Options
@@ -79,20 +79,20 @@ python ssm_manager.py get /path/to/parameter
 
 Example:
 ```bash
-python ssm_manager.py --region us-east-1 list
+python3 ssm_manager.py --region us-east-1 list
 ```
 
 ## Examples
 
 ```bash
 # List and update parameters
-python ssm_manager.py list
+python3 ssm_manager.py list
 
 # Create a new secure parameter
-python ssm_manager.py create
+python3 ssm_manager.py create
 
 # Get a parameter value
-python ssm_manager.py get /app/database/password
+python3 ssm_manager.py get /app/database/password
 ```
 
 ## Requirements
