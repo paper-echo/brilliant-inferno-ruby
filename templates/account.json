@@ -1,7 +1,9 @@
 {
-  "name": "/credential/email/name",
-  "value": "{\"username\": \"your-username-here\", \"password\": \"your-password-here\", \"mfa_enabled\": true, \"mfa_backup\": \"your-mfa-secret-here\"}",
-  "type": "SecureString",
-  "description": "Email username"
+  "username": "username",
+  "password": "password",
+  "account_type": "email",
+  "mfa_enabled": true,
+  "mfa_backup": "your-mfa-secret-here",
+  "notes": "Email username"
 }
 
