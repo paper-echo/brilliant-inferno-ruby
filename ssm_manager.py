@@ -8,6 +8,9 @@ import click
 import questionary
 from typing import List, Dict, Optional
 import sys
+import json
+import os
+from pathlib import Path
 
 
 class SSMManager:
@@ -135,7 +138,7 @@ def list(ctx):
         return
     
     if selected == "__CREATE_NEW__":
-        create_new_parameter(manager)
+        create_parameter_flow(manager)
     else:
         update_existing_parameter(manager, selected)
 
@@ -168,6 +171,156 @@ def update_existing_parameter(manager: SSMManager, param_name: str):
             click.echo(f"✓ Successfully updated {param_name}")
         else:
             click.echo(f"✗ Failed to update {param_name}")
+    else:
+        click.echo("Cancelled.")
+
+
+def get_templates_directory() -> Path:
+    """Get the templates directory path."""
+    script_dir = Path(__file__).parent
+    return script_dir / "templates"
+
+
+def list_templates() -> List[Dict[str, str]]:
+    """List all available template files."""
+    templates_dir = get_templates_directory()
+    templates = []
+    
+    if not templates_dir.exists():
+        return templates
+    
+    for template_file in templates_dir.glob("*.json"):
+        try:
+            with open(template_file, 'r') as f:
+                template_data = json.load(f)
+                templates.append({
+                    'file': str(template_file),
+                    'name': template_file.stem,
+                    'data': template_data
+                })
+        except (json.JSONDecodeError, KeyError) as e:
+            click.echo(f"Warning: Could not parse template {template_file.name}: {e}", err=True)
+            continue
+    
+    return templates
+
+
+def create_parameter_flow(manager: SSMManager):
+    """Flow to choose between creating new or from template."""
+    click.echo("\nCreate Parameter")
+    
+    choice = questionary.select(
+        "How would you like to create the parameter?",
+        choices=[
+            questionary.Choice("Create New", value="new"),
+            questionary.Choice("Create from Template", value="template"),
+        ]
+    ).ask()
+    
+    if not choice:
+        click.echo("Cancelled.")
+        return
+    
+    if choice == "new":
+        create_new_parameter(manager)
+    elif choice == "template":
+        create_from_template(manager)
+
+
+def create_from_template(manager: SSMManager):
+    """Create a parameter from a template with editing capability."""
+    templates = list_templates()
+    
+    if not templates:
+        click.echo("No templates found in the templates directory.")
+        click.echo("Creating a new parameter instead...")
+        create_new_parameter(manager)
+        return
+    
+    # Let user select a template
+    choices = [
+        questionary.Choice(
+            title=f"{t['name']} - {t['data'].get('description', 'No description')}",
+            value=idx
+        )
+        for idx, t in enumerate(templates)
+    ]
+    
+    selected_idx = questionary.select(
+        "Select a template:",
+        choices=choices
+    ).ask()
+    
+    if selected_idx is None:
+        click.echo("Cancelled.")
+        return
+    
+    template = templates[selected_idx]
+    template_data = template['data']
+    
+    click.echo(f"\nUsing template: {template['name']}")
+    click.echo("You can edit the values before saving.\n")
+    
+    # Pre-populate with template values, but allow editing
+    name = questionary.text(
+        "Parameter name:",
+        default=template_data.get('name', ''),
+        validate=lambda text: len(text) > 0 or "Parameter name cannot be empty"
+    ).ask()
+    
+    if not name:
+        click.echo("Cancelled.")
+        return
+    
+    value = questionary.text(
+        "Parameter value:",
+        default=template_data.get('value', ''),
+        validate=lambda text: len(text) > 0 or "Parameter value cannot be empty"
+    ).ask()
+    
+    if not value:
+        click.echo("Cancelled.")
+        return
+    
+    # Determine default type index
+    template_type = template_data.get('type', 'String')
+    type_choices = ["String", "StringList", "SecureString"]
+    default_type_idx = type_choices.index(template_type) if template_type in type_choices else 0
+    
+    param_type = questionary.select(
+        "Parameter type:",
+        choices=[
+            questionary.Choice("String", value="String"),
+            questionary.Choice("StringList", value="StringList"),
+            questionary.Choice("SecureString", value="SecureString"),
+        ],
+        default=type_choices[default_type_idx]
+    ).ask()
+    
+    if not param_type:
+        click.echo("Cancelled.")
+        return
+    
+    description = questionary.text(
+        "Description (optional):",
+        default=template_data.get('description', '')
+    ).ask()
+    
+    # Show summary and confirm
+    click.echo("\n--- Parameter Summary ---")
+    click.echo(f"Name: {name}")
+    click.echo(f"Type: {param_type}")
+    click.echo(f"Value: {value[:50]}{'...' if len(value) > 50 else ''}")
+    if description:
+        click.echo(f"Description: {description}")
+    click.echo("------------------------\n")
+    
+    # Confirm creation
+    if questionary.confirm("Create this parameter?").ask():
+        if manager.create_parameter(name, value, param_type, description):
+            click.echo(f"✓ Successfully created {name}")
+        else:
+            click.echo(f"✗ Failed to create {name}")
     else:
         click.echo("Cancelled.")
 
@@ -228,7 +381,7 @@ def create_new_parameter(manager: SSMManager):
 def create(ctx):
     """Create a new SSM parameter."""
     manager = ctx.obj['manager']
-    create_new_parameter(manager)
+    create_parameter_flow(manager)
 
 
 @cli.command()
