@@ -371,14 +371,14 @@ def create_from_template(manager: SSMManager):
     # Let user select a template
     choices = [
         questionary.Choice(
-            title=f"{t['name']} - {t['data'].get('description', 'No description')}",
+            title=t['name'],
             value=idx
         )
         for idx, t in enumerate(templates)
     ]
     
     selected_idx = questionary.select(
-        "Select a template:",
+        "Select a template (this will pre-fill the value only):",
         choices=choices
     ).ask()
     
@@ -389,13 +389,15 @@ def create_from_template(manager: SSMManager):
     template = templates[selected_idx]
     template_data = template['data']
     
-    click.echo(f"\nUsing template: {template['name']}")
-    click.echo("You can edit the values before saving.\n")
+    # Get the value from template (only field we use from template)
+    template_value = template_data.get('value', '')
     
-    # Pre-populate with template values, but allow editing
+    click.echo(f"\nUsing template: {template['name']}")
+    click.echo("The template will pre-fill the value. You'll enter name, type, and description.\n")
+    
+    # Get parameter name (no default from template)
     name = questionary.text(
-        "Parameter name:",
-        default=template_data.get('name', ''),
+        "Parameter name (e.g., /app/config/database-url):",
         validate=lambda text: len(text) > 0 or "Parameter name cannot be empty"
     ).ask()
     
@@ -403,9 +405,10 @@ def create_from_template(manager: SSMManager):
         click.echo("Cancelled.")
         return
     
+    # Pre-populate value from template, but allow editing
     value = questionary.text(
         "Parameter value:",
-        default=template_data.get('value', ''),
+        default=template_value,
         validate=lambda text: len(text) > 0 or "Parameter value cannot be empty"
     ).ask()
     
@@ -413,11 +416,7 @@ def create_from_template(manager: SSMManager):
         click.echo("Cancelled.")
         return
     
-    # Determine default type index
-    template_type = template_data.get('type', 'String')
-    type_choices = ["String", "StringList", "SecureString"]
-    default_type_idx = type_choices.index(template_type) if template_type in type_choices else 0
-    
+    # Get parameter type (no default from template)
     param_type = questionary.select(
         "Parameter type:",
         choices=[
@@ -425,16 +424,16 @@ def create_from_template(manager: SSMManager):
             questionary.Choice("StringList", value="StringList"),
             questionary.Choice("SecureString", value="SecureString"),
         ],
-        default=type_choices[default_type_idx]
+        default="String"
     ).ask()
     
     if not param_type:
         click.echo("Cancelled.")
         return
     
+    # Get description (no default from template)
     description = questionary.text(
         "Description (optional):",
-        default=template_data.get('description', '')
     ).ask()
     
     # Show summary and confirm

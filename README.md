@@ -5,8 +5,11 @@ A command-line tool to interactively manage AWS SSM Parameter Store parameters.
 ## Features
 
 - 📋 List all parameters from SSM Parameter Store
-- ✏️ Select and update parameters interactively
+- 👁️ View parameter details (name, type, value, description)
+- ✏️ Update parameters interactively
 - ➕ Create new parameters with interactive prompts
+- 📝 Create parameters from templates
+- 🗑️ Delete parameters (with confirmation)
 - 🔍 Get specific parameter values
 
 ## Installation
@@ -31,9 +34,9 @@ pip install -r requirements.txt
 
 **Note:** Make sure your virtual environment is activated (`source venv/bin/activate`) before running commands.
 
-### List and Update Parameters
+### List, View, and Update Parameters
 
-List all parameters and interactively select one to update:
+List all parameters and interactively select one to view or update:
 
 ```bash
 python3 ssm_manager.py list
@@ -42,9 +45,13 @@ python3 ssm_manager.py list
 This will:
 1. Fetch all parameters from SSM Parameter Store
 2. Display them in an interactive menu
-3. Allow you to select one to update
-4. Prompt for the new value
-5. Optionally create a new parameter from the menu
+3. When you select a parameter, choose to **View** or **Update**:
+   - **View**: Display parameter details (name, type, value, description, last modified)
+   - **Update**: Modify the parameter value
+4. Additional menu options:
+   - `[Create New Parameter]` - Create a new parameter
+   - `[Delete Parameter]` - Delete a parameter
+   - `[Quit]` - Exit the tool
 
 ### Create New Parameter
 
@@ -54,16 +61,25 @@ Create a new parameter interactively:
 python3 ssm_manager.py create
 ```
 
-Or use the script directly:
-```bash
-./ssm_manager.py create
-```
+You'll be prompted to choose:
+- **Create New**: Create from scratch
+- **Create from Template**: Use a pre-configured template
 
+#### Create New
 This will prompt you for:
 - Parameter name (e.g., `/app/config/database-url`)
 - Parameter value
 - Parameter type (String, StringList, SecureString)
 - Optional description
+
+#### Create from Template
+1. Select a template from the `templates/` directory
+2. The template's `value` will pre-fill the value field
+3. Enter the parameter name, type, and description manually
+4. Edit the pre-filled value if needed
+5. Review summary and confirm creation
+
+**Templates**: Templates only contain the `value` field. The `name`, `type`, and `description` are entered manually during creation. See `templates/README.md` for format details.
 
 ### Get Parameter Value
 
@@ -72,6 +88,20 @@ Get the value of a specific parameter:
 ```bash
 python3 ssm_manager.py get /path/to/parameter
 ```
+
+### Delete Parameter
+
+Delete a specific parameter:
+
+```bash
+# With confirmation prompt
+python3 ssm_manager.py delete /path/to/parameter
+
+# Without confirmation (force)
+python3 ssm_manager.py delete /path/to/parameter --force
+```
+
+You can also delete parameters interactively from the list menu by selecting `[Delete Parameter]`.
 
 ### Options
 
@@ -85,14 +115,23 @@ python3 ssm_manager.py --region us-east-1 list
 ## Examples
 
 ```bash
-# List and update parameters
+# List parameters and interact with them (view/update/delete)
 python3 ssm_manager.py list
 
-# Create a new secure parameter
+# Create a new parameter (from scratch or template)
 python3 ssm_manager.py create
 
 # Get a parameter value
 python3 ssm_manager.py get /app/database/password
+
+# Delete a parameter (with confirmation)
+python3 ssm_manager.py delete /app/old-config
+
+# Delete a parameter (without confirmation)
+python3 ssm_manager.py delete /app/old-config --force
+
+# Use a specific AWS region
+python3 ssm_manager.py --region us-west-2 list
 ```
 
 ## Requirements
@@ -115,11 +154,26 @@ Your AWS credentials need the following permissions:
         "ssm:DescribeParameters",
         "ssm:GetParameter",
         "ssm:GetParameters",
-        "ssm:PutParameter"
+        "ssm:PutParameter",
+        "ssm:DeleteParameter"
       ],
       "Resource": "*"
     }
   ]
 }
 ```
+
+## Templates
+
+The tool supports creating parameters from templates stored in the `templates/` directory. Each template is a JSON file that contains only the `value` field:
+
+```json
+{
+  "value": "default-value-here"
+}
+```
+
+**Note:** Only the `value` field is used from templates. The `name`, `type`, and `description` are entered manually during parameter creation.
+
+See `templates/README.md` for more details on creating and using templates.
 

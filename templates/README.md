@@ -8,23 +8,31 @@ Each template file should be a JSON file with the following structure:
 
 ```json
 {
-  "name": "/app/config/parameter-name",
-  "value": "default-value-here",
-  "type": "SecureString",
-  "description": "Description of what this parameter is for"
+  "value": "default-value-here"
 }
 ```
 
+**Note:** Only the `value` field is used from templates. The `name`, `type`, and `description` fields (if present) are ignored and will be entered manually during parameter creation.
+
 ## Fields
 
-- **name** (required): The default parameter name/path
-- **value** (required): The default value for the parameter
-- **type** (optional): Parameter type - `String`, `StringList`, or `SecureString` (default: `String`)
-- **description** (optional): Description of the parameter
+- **value** (required): The default value for the parameter that will pre-populate the value field
+
+**Optional fields (for reference only, not used by the tool):**
+- `name` - Ignored, entered manually
+- `type` - Ignored, selected manually  
+- `description` - Ignored, entered manually
 
 ## Usage
 
-When you select "Create from Template" in the SSM Manager, you can choose from templates in this directory. The template values will pre-populate the form, but you can edit them before saving.
+When you select "Create from Template" in the SSM Manager:
+1. Choose a template from the list
+2. The template's `value` will pre-fill the value field
+3. You'll be prompted to enter:
+   - Parameter name (e.g., `/app/config/database-url`)
+   - Parameter type (String, StringList, or SecureString)
+   - Description (optional)
+4. You can edit the pre-filled value before saving
 
 ## Example Templates
 
