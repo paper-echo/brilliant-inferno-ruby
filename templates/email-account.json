@@ -3,6 +3,7 @@
   "password": "password",
   "account_type": "email",
   "mfa_enabled": true,
+  "mfa_type": "microsoft authenticator",
   "mfa_backup": "your-mfa-secret-here",
   "notes": "Email username"
 }
