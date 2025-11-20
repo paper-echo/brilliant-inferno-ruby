@@ -1,7 +1,0 @@
-{
-  "name": "/app/database/connection-string",
-  "value": "postgresql://user:password@localhost:5432/mydb",
-  "type": "SecureString",
-  "description": "Database connection string"
-}
-

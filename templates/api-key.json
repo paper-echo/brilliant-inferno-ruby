@@ -1,7 +1,0 @@
-{
-  "name": "/app/api/external-key",
-  "value": "{\"key\": \"your-api-key-here\"}",
-  "type": "SecureString",
-  "description": "External API key"
-}
-
