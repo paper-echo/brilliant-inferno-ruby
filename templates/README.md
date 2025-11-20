@@ -4,35 +4,38 @@ This directory contains JSON template files for creating SSM parameters with pre
 
 ## Template Format
 
-Each template file should be a JSON file with the following structure:
+Each template file should be a JSON file. The **entire JSON object** will be serialized as a JSON string and used as the parameter value.
+
+Example template:
 
 ```json
 {
-  "value": "default-value-here"
+  "username": "username",
+  "password": "password",
+  "account_type": "email",
+  "mfa_enabled": true,
+  "mfa_backup": "your-mfa-secret-here",
+  "notes": "Email username"
 }
 ```
 
-**Note:** Only the `value` field is used from templates. The `name`, `type`, and `description` fields (if present) are ignored and will be entered manually during parameter creation.
+This will be converted to a JSON string and used as the SSM parameter value:
+```
+{"username": "username", "password": "password", "account_type": "email", "mfa_enabled": true, "mfa_backup": "your-mfa-secret-here", "notes": "Email username"}
+```
 
-## Fields
-
-- **value** (required): The default value for the parameter that will pre-populate the value field
-
-**Optional fields (for reference only, not used by the tool):**
-- `name` - Ignored, entered manually
-- `type` - Ignored, selected manually  
-- `description` - Ignored, entered manually
+**Note:** The entire template JSON becomes the parameter value. The parameter `name`, `type`, and `description` are entered manually during parameter creation.
 
 ## Usage
 
 When you select "Create from Template" in the SSM Manager:
 1. Choose a template from the list
-2. The template's `value` will pre-fill the value field
+2. The entire template JSON will be serialized and pre-fill the value field
 3. You'll be prompted to enter:
    - Parameter name (e.g., `/app/config/database-url`)
    - Parameter type (String, StringList, or SecureString)
    - Description (optional)
-4. You can edit the pre-filled value before saving
+4. You can edit the pre-filled JSON string value before saving
 
 ## Example Templates
 

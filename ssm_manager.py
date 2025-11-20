@@ -389,8 +389,8 @@ def create_from_template(manager: SSMManager):
     template = templates[selected_idx]
     template_data = template['data']
     
-    # Get the value from template (only field we use from template)
-    template_value = template_data.get('value', '')
+    # Serialize the entire template JSON as the value
+    template_value = json.dumps(template_data, indent=None)
     
     click.echo(f"\nUsing template: {template['name']}")
     click.echo("The template will pre-fill the value. You'll enter name, type, and description.\n")
